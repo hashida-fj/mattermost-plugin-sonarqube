@@ -73,7 +73,7 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
         p.API.LogInfo(err.Message)
         http.Error(w, err.Message, err.StatusCode)
     } else if attachment, err := webhook.SlackAttachment(); err != nil {
-        p.API.LogInfo("slack attachment is not completed.")
+        p.API.LogInfo("slack attachment is not completed.: ")
         http.Error(w, "", http.StatusBadRequest)
 	} else if _, err := p.API.CreatePost(&model.Post{
 		ChannelId: channel.Id,
