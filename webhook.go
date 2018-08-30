@@ -1,9 +1,9 @@
 package main
 
 import (
-	// "bytes"
 	// "strings"
-    //  "text/template"
+    "bytes"
+    "text/template"
 	// "errors"
 
 	"github.com/mattermost/mattermost-server/model"
@@ -35,14 +35,35 @@ type WebhookResponse struct {
 }
 
 
+func (w *WebhookResponse) buildTable() (string, error) {
+    var rows bytes.Buffer
+    //  var res = ""
+
+    header := "|品質指標|現在の値|閾値|\n|:-|:-|:-|\n"
+    tmplstr := "|{{.Status}}{{.Metric}}|{{.Value}}|{{.ErrorThreshold}}|\n"
+    rowtmpl, err:= template.New("row").Parse(tmplstr)
+    if err != nil { return "", err}
+
+    rows.WriteString(header)
+    for _, cond := range w.QualityGate.Conditions {
+        if err := rowtmpl.Execute(&rows, cond); err != nil {
+            return "error", err
+        }
+    }
+
+    return rows.String(), nil
+}
+
 func (w *WebhookResponse) SlackAttachment() (*model.SlackAttachment, error) {
 
+    table, err := w.buildTable()
+    if err != nil {
+        return nil, err
+    }
 	return &model.SlackAttachment{
 		Color: "#95b7d0",
-
-		Text: w.QualityGate.Status + w.QualityGate.Conditions[3].Value + ":" + w.QualityGate.Conditions[3].Status,
+		Text: table,
 		Title: "sonar",
-
 		AuthorName: "SonarQube",
 		AuthorLink: w.ServerURL,
 	}, nil
